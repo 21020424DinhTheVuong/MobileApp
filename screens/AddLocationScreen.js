@@ -2,46 +2,43 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, Button, StyleSheet, StatusBar, Image, SafeAreaView, TouchableOpacity, ScrollView } from 'react-native';
 import { getFocusedRouteNameFromRoute, useRoute } from '@react-navigation/native';
 import { fetchWeatherForecast, fetchLocations } from '../api/weather';
-import { db } from "../components/config";
-import { ref, set, update, onValue, remove, get } from "firebase/database"
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ArrowLeftIcon, TrashIcon } from 'react-native-heroicons/outline';
-import { listAddLocation } from '../constant/listLocation';
+// import { listAddLocations } from '../constant/listLocation';
 
 function AddLocationScreen({ navigation }) {
-
-    const [weather, setWeather] = useState({});
-
+    const route = useRoute();
     const [loading, setLoading] = useState(false);
 
-    const deleteData = (location, city) => { // Replace with actual path
-        // listAddLocation = listAddLocation.filter(item => item.city !== city && item.location !== location)
+    const [list, setList] = useState();
+    const getList = async () => {
+
+        try {
+            const listAdd = await AsyncStorage.getItem("list");
+            const array = JSON.parse(listAdd);
+            setList(array)
+            // console.log("list", listAdd)
+            setLoading(false)
+        } catch (error) {
+            console.log('Error get array:', error);
+        }
     }
+    useEffect(() => {
+        getList()
+    }, [list])
 
-    const { current, location } = weather;
-
-    // const readFile = useCallback(async () => {
-    //     let listTemp = [];
-    //     try {
-    //         const snapshot = await get(ref(db, "location"));
-    //         const data = snapshot.val();
-    //         listTemp = data;
-    //         // setListAddLocation(listTemp)
-    //         console.log(listTemp)
-
-    //     } catch (error) {
-    //         console.error("Error reading data:", error);
-    //     } finally {
-    //         setLoading(false); // Always set loading to false after fetching
-    //     }
-
-    // }, [navigation]); // Include db in dependency array to refetch if it changes
-
-    // useEffect(() => {
-
-
-    //     readFile()
-    // }, [navigation]); // Re-run effect on navigation changes
-
+    const deleteLocation = async (city, location) => {
+        try {
+            let listTemp = list.filter(item => !(item.location === location && item.city === city))
+            // await AsyncStorage.clear();
+            const jsonValue = JSON.stringify(listTemp);
+            await AsyncStorage.setItem("list", jsonValue);
+            console.log('Array delete successfully');
+        } catch (error) {
+            console.log('Error delete array:', error);
+        }
+        setList(prevList => prevList.filter(item => !(item.location === location && item.city === city)));
+    };
 
     return (
         <View style={styles.container}>
@@ -72,7 +69,7 @@ function AddLocationScreen({ navigation }) {
                                     showsVerticalScrollIndicator={false}>
 
                                     {
-                                        listAddLocation?.map((item, index) => {
+                                        list?.map((item, index) => {
                                             return (
                                                 <View style={{ display: "flex", flexDirection: "row" }} key={index}>
                                                     <TouchableOpacity
@@ -93,8 +90,8 @@ function AddLocationScreen({ navigation }) {
                                                     </TouchableOpacity>
 
                                                     <TouchableOpacity
-                                                        onPress={() => { deleteData(item.location, item.city) }}
-                                                        key={index.toString() + index.toString}
+                                                        onPress={() => { deleteLocation(item?.city, item?.location); }}
+                                                        key={index.toString() + index}
                                                         style={{ marginTop: 30, marginLeft: 10 }}
                                                     >
                                                         <TrashIcon size={40} color={"red"} />

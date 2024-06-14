@@ -1,2 +1,2 @@
 
-export let listAddLocation = []
+export let listAddLocations = [];

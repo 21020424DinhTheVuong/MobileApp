@@ -1,4 +1,4 @@
-export const apiKey = "fb4f157d597a441898e155850241504";
+export const apiKey = "6c6a5345832f48b9ae4100846241406";
 
 export const weatherImage = {
     "Sunny": require("../assets/day/Sunny.png"),
@@ -7,6 +7,7 @@ export const weatherImage = {
     "Partly cloudy ": require("../assets/day/Partly-cloudy.png"),
     "Partly cloudy": require("../assets/day/Partly-cloudy.png"),
     "Cloudy ": require("../assets/day/Cloudy.png"),
+    "Cloudy": require("../assets/day/Cloudy.png"),
     "Overcast ": require("../assets/day/Overcast.png"),
     "Overcast": require("../assets/day/Overcast.png"),
     "Mist": require("../assets/day/Mist.png"),
@@ -62,6 +63,7 @@ export const weatherImageNight = {
     "Partly cloudy": require("../assets/night/Partly-cloudy.png"),
     "Partly cloudy ": require("../assets/night/Partly-cloudy.png"),
     "Cloudy ": require("../assets/night/Cloudy.png"),
+    "Cloudy": require("../assets/night/Cloudy.png"),
     "Overcast ": require("../assets/night/Overcast.png"),
     "Overcast": require("../assets/night/Overcast.png"),
     "Mist": require("../assets/night/Mist.png"),

@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: "grey",
         borderRadius: 10,
-        backgroundColor: "#00BFFF"
+        backgroundColor: "#709BA9"
     },
     detailStyle: {
         display: "flex",

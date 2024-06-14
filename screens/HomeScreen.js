@@ -19,11 +19,9 @@ import { theme } from '../theme'; // Assuming theme is imported correctly
 import { MagnifyingGlassIcon, MapPinIcon, CalendarDaysIcon, PlusIcon } from "react-native-heroicons/outline"
 import { fetchLocations, fetchWeatherForecast } from '../api/weather';
 import { weatherImage, weatherImageNight } from '../constant';
-import { db } from "../components/config";
-import { ref, set, update, onValue, remove, get } from "firebase/database"
 import * as Location from "expo-location";
 import * as Progress from "react-native-progress";
-import { listAddLocation } from '../constant/listLocation';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const HomeScreen = ({ navigation }) => {
     const route = useRoute();
@@ -34,8 +32,8 @@ const HomeScreen = ({ navigation }) => {
     const [locations, setlocations] = useState([]);
     const [weather, setWeather] = useState({});
     const [loading, setLoading] = useState(true);
-    const [listLocation, setListLocation] = useState([]);
-    // const [listAddLocation, setListAddLocation] = useState([])
+    // const [listLocation, setListLocation] = useState([]);
+    const [listAddLocation, setListAddLocation] = useState([]);
 
 
     const getPermission = async () => {
@@ -52,7 +50,7 @@ const HomeScreen = ({ navigation }) => {
                 latitude: tempLocation.coords.latitude,
             });
             setAddress(reverseGeocodeAddress[0].region);
-            // console.log(address)
+            // console.log(reverseGeocodeAddress)
         } catch (error) {
             console.error(error)
         }
@@ -78,6 +76,17 @@ const HomeScreen = ({ navigation }) => {
         })
     }
 
+    const handleBackCurrentLocation = (location) => {
+        setLoading(true);
+        fetchWeatherForecast({
+            cityName: location?.name,
+            days: '7'
+        }).then(data => {
+            setWeather(data);
+            setLoading(false);
+            // console.log(data)
+        })
+    }
     const handleSearch = (value) => {
         if (value.length > 2) {
             fetchLocations({ cityName: value }).then(data => {
@@ -87,21 +96,6 @@ const HomeScreen = ({ navigation }) => {
 
     }
 
-    const readFile = async () => {
-        try {
-            const snapshot = await get(ref(db, "location"));
-            const data = snapshot.val();
-            // console.log(data)
-            setListLocation([...listLocation, data]);
-            setLoading(false)
-
-        } catch (error) {
-            console.error("Error reading data:", error);
-        }
-    };
-    // useEffect(() => {
-    //     readFile();
-    // }, [navigation])
 
     const fetchMyWeatherData = async () => {
         fetchWeatherForecast({
@@ -146,34 +140,52 @@ const HomeScreen = ({ navigation }) => {
     Math.round(weather?.forecast?.forecastday[0]?.hour[23].temp_c),]
     const currentTransfer = [current?.wind_kph, current?.humidity, Math.round(current?.temp_c), Math.round(current?.feelslike_c),
     weather?.forecast?.forecastday[0]?.astro?.sunrise, weather?.forecast?.forecastday[0]?.astro?.sunset]
-    // console.log(currentTransfer)
-    const create = (location, city) => {
-        set(ref(db, "location/"), {
-            country: location,
-            city: city
-        }).then(() => {
-            console.log("submitted")
-        })
-    }
-    const addLocation = (loc, ci) => {
-        if (listAddLocation.some(location => {
-            // Compare properties one by one (more explicit)
-            return (
-                location.city === ci &&
-                location.location === loc
-            )
-        })) {
-            // setListAddLocation([...listAddLocation])
 
-        } else {
-            // setListAddLocation([...listAddLocation, { city: ci, location: loc }])
-            listAddLocation.push({ city: ci, location: loc })
+    const getListData = async () => {
+        try {
+            const listAdd = await AsyncStorage.getItem("list");
+            const array = JSON.parse(listAdd);
+            setListAddLocation(array)
+            // console.log("listAdd", listAdd)
+        } catch (error) {
+            console.log('Error get array:', error);
         }
-        console.log(listAddLocation)
     }
+    useEffect(() => {
+        getListData()
+    }, [])
+    const addLocation = async (loc, ci) => {
+        try {
+            // Retrieve the array from AsyncStorage
+            const jsonValue = await AsyncStorage.getItem("list");
+            let locations = [];
+
+            if (jsonValue !== null) {
+                // Parse the string value back into an array if it exists
+                locations = JSON.parse(jsonValue);
+            }
+
+            // Check if the new location already exists in the array
+            const isDuplicate = locations.some(location => location.city === ci && location.location === loc);
+
+            if (!isDuplicate) {
+                // Add the new location to the array
+                locations.push({ city: ci, location: loc });
+                console.log(locations)
+                // Store the updated array back into AsyncStorage
+                await AsyncStorage.setItem("list", JSON.stringify(locations));
+                console.log('Location added successfully');
+            } else {
+                console.log('Location already exists in the array');
+            }
+        } catch (error) {
+            console.log('Error adding location:', error);
+        }
+
+    };
     const handleNavigationAddLocation = (location, city) => {
-        create(location, city);
-        readFile();
+        addLocation(location, city)
+        // addLocation(location, city)
         addLocation(location, city)
         navigation.navigate("AddLocationScreen", { listAddLocation })
     }
@@ -232,18 +244,25 @@ const HomeScreen = ({ navigation }) => {
                                     })
                                 }
                             </View> : null}
-                        <View style={{ position: 'relative' }}>
+                        <View style={{ position: 'flex', flexDirection: "row", paddingTop: 10 }}>
                             <TouchableOpacity onPress={() => { handleNavigationAddLocation(location?.country, location?.name); }}>
                                 <PlusIcon
                                     size={35}
                                     color={"white"}
-                                    style={{ position: 'absolute', right: 5, top: 10 }} // Adjust positioning as needed
+                                    style={{ position: 'absolute', left: 320 }} // Adjust positioning as needed
+                                />
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={() => { handleBackCurrentLocation({ "country": "Vietnam", "id": 2717933, "lat": 21.03, "lon": 105.85, "name": "Ha Noi", "region": "", "url": "ha-noi-vietnam" }) }}>
+                                <MapPinIcon
+                                    size={35}
+                                    color={"white"}
+                                    style={{ position: 'absolute', left: 5 }} // Adjust positioning as needed
                                 />
                             </TouchableOpacity>
 
                         </View>
 
-                        <View style={{ marginHorizontal: 4, display: "flex", justifyContent: "space-around", top: 100, }}>
+                        <View style={{ marginHorizontal: 4, display: "flex", justifyContent: "space-around", top: 80, }}>
                             <View style={{ alignItems: "center", justifyContent: "center", }}>
                                 <Text style={{ color: "white", textAlign: "center", fontSize: 30, fontWeight: "bold" }}>
                                     {location?.name} - {' '}
@@ -361,8 +380,8 @@ const HomeScreen = ({ navigation }) => {
                                             <Text style={{ color: "white", fontSize: 16, fontWeight: 600 }}>{current?.temp_c}&#176;</Text>
                                         ) : (
                                             <View>
-                                                <Text style={{ color: "white", fontSize: 16, fontWeight: 600 }}>{item?.day?.maxtemp_c.toString()}&#176;</Text>
-                                                <Text style={{ color: "white", fontSize: 16, fontWeight: 600 }}>{item?.day?.mintemp_c.toString()}&#176;</Text>
+                                                <Text style={{ color: "white", fontSize: 16, fontWeight: 600 }}>{Math.round(item?.day?.maxtemp_c.toString())}&#176;</Text>
+                                                <Text style={{ color: "white", fontSize: 16, fontWeight: 600 }}>{Math.round(item?.day?.mintemp_c.toString())}&#176;</Text>
 
                                             </View>
                                         )
@@ -456,7 +475,7 @@ const styles = StyleSheet.create({
         borderBottomColor: '#d4d7dc'
     },
     detailButtonStyles: {
-        top: 360,
+        top: 340,
         borderWidth: 1,
         borderColor: "grey",
         height: 50,

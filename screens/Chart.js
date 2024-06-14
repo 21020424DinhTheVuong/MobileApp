@@ -45,9 +45,10 @@ const MyLineChart = ({ data }) => {
                     //yAxisSuffix="k"
                     //yAxisInterval={1} // optional, defaults to 1
                     chartConfig={{
-                        backgroundColor: '#00BFFF',
-                        backgroundGradientFrom: '#00BFFF',
-                        backgroundGradientTo: '#00BFFF',
+                        backgroundColor: '#7AABBB',
+                        backgroundGradientFrom: '#7AABBB',
+                        backgroundGradientTo: '#7AABBB',
+
                         decimalPlaces: 1,
                         color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
                         labelColor: (opacity = 1) => `rgba(28, 40, 51 , ${opacity})`,
